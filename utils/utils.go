@@ -232,9 +232,7 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 	//err := errors.New("")
 
 	if err != nil {
-		if strings.Contains(err.Error(), "Content-Length") {
-			err = DownloadFile(storePath, fileUrl)
-		}
+		err = DownloadFile(storePath, fileUrl)
 		if err == nil {
 			log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
 			return resultLines, nil
@@ -285,17 +283,22 @@ func FixBrokenDownloadFile(maxRetry int) {
 	}
 	fi.Close()
 	var resultContainer = []string{}
-	for i := 0; i < maxRetry; i++ {
-		for index, brokenLine := range resultLine {
+	var lastFinishedIndex = -1
+	for index, brokenLine := range resultLine {
+		for i := 0; i < maxRetry; i++ {
+			if index == lastFinishedIndex {
+				break
+			}
 			log.AsmrLog.Info(fmt.Sprintf("index: %d,line: %s", index, brokenLine))
 			fileInfos := strings.Split(brokenLine, "|")
 			downloader, _ := NewFixFileDownloader(fileInfos[2], fileInfos[1], resultContainer)
 			resultContainer = downloader
+			lastFinishedIndex = index
+			if len(resultContainer) <= 0 {
+				break
+			}
+			log.AsmrLog.Info(fmt.Sprintf("重试下载文件再次出错,重试中(剩余重试次数: %d)...", maxRetry-i-1))
 		}
-		if len(resultContainer) <= 0 {
-			break
-		}
-		log.AsmrLog.Info(fmt.Sprintf("重试下载文件再次出错,重试中(剩余重试次数: %d)...", maxRetry-i-1))
 	}
 	//删除temp文件
 	err2 := os.Remove(FailedDownloadFileNameTemp)
