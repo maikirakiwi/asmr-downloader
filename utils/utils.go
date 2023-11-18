@@ -293,9 +293,10 @@ func FixBrokenDownloadFile(maxRetry int) {
 			fileInfos := strings.Split(brokenLine, "|")
 			downloader, _ := NewFixFileDownloader(fileInfos[2], fileInfos[1], resultContainer)
 			resultContainer = downloader
-			lastFinishedIndex = index
 			if len(resultContainer) <= 0 {
 				break
+			} else {
+				lastFinishedIndex = index
 			}
 			log.AsmrLog.Info(fmt.Sprintf("重试下载文件再次出错,重试中(剩余重试次数: %d)...", maxRetry-i-1))
 		}
