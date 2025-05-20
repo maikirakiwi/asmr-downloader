@@ -207,8 +207,9 @@ func DownloadItemHandler(asmrClient *spider.ASMRClient) {
 			UpdateItemDownStatus(i.rjid, i.subtitleFlag)
 			dbLock.Unlock()
 			utils.FixBrokenDownloadFile(maxRetry)
+			<-sem
 		}()
-		<-sem
+
 	}
 
 }
