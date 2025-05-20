@@ -179,24 +179,38 @@ func DownloadItemHandler(asmrClient *spider.ASMRClient) {
 		}
 		log.AsmrLog.Fatal("查询数据库失败: ", zap.String("error", err.Error()))
 	}
-	defer rows.Close()
-	sem := make(chan struct{}, batchTaskCount)
-	for rows.Next() {
-		sem <- struct{}{}
 
+	// Garbage code starts here
+	download_queue := []struct {
+		rjid         string
+		subtitleFlag int
+	}{}
+	for rows.Next() {
 		var rjid string
 		var subtitleFlag int
 		rows.Scan(&rjid, &subtitleFlag)
-		fetchTracksId := strings.Replace(rjid, "RJ", "", 1)
-		go func() {
-			asmrClient.DownloadItem(fetchTracksId, subtitleFlag)
-			//更新ASMR数据下载状态
-			UpdateItemDownStatus(rjid, subtitleFlag)
-			utils.FixBrokenDownloadFile(maxRetry)
-			<-sem
-		}()
-
+		download_queue = append(download_queue, struct {
+			rjid         string
+			subtitleFlag int
+		}{rjid: rjid, subtitleFlag: subtitleFlag})
 	}
+	rows.Close()
+
+	sem := make(chan struct{}, batchTaskCount)
+	dbLock := &sync.Mutex{}
+
+	for _, i := range download_queue {
+		sem <- struct{}{}
+		go func() {
+			asmrClient.DownloadItem(strings.Replace(i.rjid, "RJ", "", 1), i.subtitleFlag)
+			dbLock.Lock()
+			UpdateItemDownStatus(i.rjid, i.subtitleFlag)
+			dbLock.Unlock()
+			utils.FixBrokenDownloadFile(maxRetry)
+		}()
+		<-sem
+	}
+
 }
 
 // UpdateItemDownStatus

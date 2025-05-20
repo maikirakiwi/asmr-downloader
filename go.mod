@@ -1,6 +1,6 @@
 module asmr-downloader
 
-go 1.20
+go 1.24.3
 
 require (
 	github.com/melbahja/got v0.7.0
