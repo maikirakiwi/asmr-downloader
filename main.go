@@ -165,45 +165,37 @@ func SimpleModeDownload(idList []string, allFlag bool) {
 //	@Description: ASMR作品下载
 //	@param asmrClient
 func DownloadItemHandler(asmrClient *spider.ASMRClient) {
-	batchCounter := 0
 	//批量下载大小 默认为1, -1表示一次性全部下载
 	var batchTaskCount = asmrClient.GlobalConfig.BatchTaskCount
-	//批量下载完后休息多少秒(防止服务器ban你)
-	var batchSleepTime = asmrClient.GlobalConfig.BatchSleepTime
-	//是否自动执行 下一个批次
-	var autoForNextBatch = asmrClient.GlobalConfig.AutoForNextBatch
+
 	// 失败作品重试次数
 	var maxRetry = asmrClient.GlobalConfig.MaxFailedRetry
-	for {
-		if batchCounter == batchTaskCount {
-			log.AsmrLog.Info("--------------------为下一批次下载休眠--------------------")
-			time.Sleep(time.Duration(batchSleepTime) * time.Second)
-			if !autoForNextBatch {
-				//处理下载失败的链接
-				utils.FixBrokenDownloadFile(maxRetry)
-				_ = utils.PromotForInput("手动确认下一批次任务,按回车键继续进行任务: ", "")
-			}
-			//重置batchCounter
-			batchCounter = 0
+
+	rows, err := storage.StoreDb.Db.Query("select rjid,subtitle_flag from asmr_download where download_flag =0")
+	if err != nil {
+		if err == sql.ErrNoRows {
+			//没有数据了
+			return
 		}
+		log.AsmrLog.Fatal("查询数据库失败: ", zap.String("error", err.Error()))
+	}
+	defer rows.Close()
+	sem := make(chan struct{}, batchTaskCount)
+	for rows.Next() {
+		sem <- struct{}{}
 
 		var rjid string
 		var subtitleFlag int
-
-		err := storage.StoreDb.Db.QueryRow("select rjid,subtitle_flag from asmr_download where download_flag =0").Scan(&rjid, &subtitleFlag)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				//没有数据了
-				break
-			}
-			log.AsmrLog.Fatal("查询数据库失败: ", zap.String("error", err.Error()))
-		}
+		rows.Scan(&rjid, &subtitleFlag)
 		fetchTracksId := strings.Replace(rjid, "RJ", "", 1)
+		go func() {
+			asmrClient.DownloadItem(fetchTracksId, subtitleFlag)
+			//更新ASMR数据下载状态
+			UpdateItemDownStatus(rjid, subtitleFlag)
+			utils.FixBrokenDownloadFile(maxRetry)
+			<-sem
+		}()
 
-		asmrClient.DownloadItem(fetchTracksId, subtitleFlag)
-		//更新ASMR数据下载状态
-		UpdateItemDownStatus(rjid, subtitleFlag)
-		batchCounter += 1
 	}
 }
 
