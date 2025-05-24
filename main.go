@@ -28,7 +28,7 @@ func main() {
 	defer log.AsmrLog.Sync()
 	//获取程序传入的参数
 	//简易下载模式
-	if len(os.Args) >= 2 && os.Args[1] != "" {
+	if len(os.Args) >= 2 && os.Args[1] != "" && os.Args[1] != "cron" {
 		builder := strings.Builder{}
 		container := []string{}
 		allFlag := false
@@ -99,7 +99,12 @@ func main() {
 	//检查是否需要进行下载作品MPS
 	needUpdateDownload := CheckIfNeedUpdateDownload()
 	if needUpdateDownload {
-		input := utils.PromotForInput("ASMR作品本地与网站不同步.是否需要同步下载(Y/N,默认为Y)?:", "Y")
+		var input string
+		if len(os.Args) >= 2 && os.Args[1] == "cron" {
+			input = "Y"
+		} else {
+			input = utils.PromotForInput("ASMR作品本地与网站不同步.是否需要同步下载(Y/N,默认为Y)?:", "Y")
+		}
 		if input == "Y" {
 			//TODO do download task
 			//检测破碎文件并下载
