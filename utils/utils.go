@@ -236,7 +236,7 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 	content, err := os.ReadFile(storePath)
 	if err != nil || strings.Contains(string(content), "1015") {
 		// Remove the file if it exists
-		os.Remove(storePath)
+		_ = os.Remove(storePath)
 
 		err = DownloadFile(storePath, fileUrl)
 		if err == nil {
