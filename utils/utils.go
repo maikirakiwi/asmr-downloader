@@ -235,6 +235,9 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 	// Handle both normal errors and cloudflare rate limiting errors
 	content, err := os.ReadFile(storePath)
 	if err != nil || strings.Contains(string(content), "1015") {
+		// Remove the file if it exists
+		os.Remove(storePath)
+
 		err = DownloadFile(storePath, fileUrl)
 		if err == nil {
 			log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
