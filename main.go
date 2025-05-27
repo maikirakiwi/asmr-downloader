@@ -74,6 +74,7 @@ func main() {
 	}
 	log.AsmrLog.Info("账号登录成功!")
 	var authStr = asmrClient.Authorization
+
 	//检查数据更新
 	ifNeedUpdateMetadata, err := CheckIfNeedUpdateMetadata(authStr)
 	if err != nil {
@@ -85,10 +86,20 @@ func main() {
 	// Format the time using the standard format string
 	currentTimeStr := now.Format("2006-01-02 15:04:05")
 
+	// Discord webhook init
+	log.InitDiscordLogger(globalConfig.DiscordWebhook)
+
 	if ifNeedUpdateMetadata {
+		if err := log.DiscordWebhook.Send("网站有新作品更新,正在进行更新..."); err != nil {
+			log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+		}
+
 		log.AsmrLog.Info(fmt.Sprintf("当前时间: %s,网站有新作品更新,正在进行更新...", currentTimeStr))
 		FetchAllMetaData(authStr, asmrClient)
 	} else {
+		if err := log.DiscordWebhook.Send("网站暂时无新作品"); err != nil {
+			log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+		}
 		log.AsmrLog.Info(fmt.Sprintf("当前时间: %s,网站暂时无新作品...", currentTimeStr))
 	}
 	//获取首页
@@ -117,11 +128,17 @@ func main() {
 			log.AsmrLog.Info("正在下载ASMR作品文件,请稍后...")
 			DownloadItemHandler(asmrClient)
 			log.AsmrLog.Info("当前下载任务已完成...")
+			if err := log.DiscordWebhook.Send("当前下载任务已完成..."); err != nil {
+				log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+			}
 		} else {
 			log.AsmrLog.Info("你已取消下载,程序即将退出.")
 		}
 
 	} else {
+		if err := log.DiscordWebhook.Send("ASMR作品本地与网站完全同步.当前无需下载"); err != nil {
+			log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+		}
 		log.AsmrLog.Info("ASMR作品本地与网站完全同步.当前无需下载")
 	}
 	//close db con
@@ -130,7 +147,7 @@ func main() {
 
 func SimpleModeDownload(idList []string, allFlag bool) {
 	c := &config.Config{
-		Account:          "guset",
+		Account:          "guest",
 		Password:         "guest",
 		MaxWorker:        6,
 		BatchTaskCount:   1,
@@ -203,6 +220,8 @@ func DownloadItemHandler(asmrClient *spider.ASMRClient) {
 
 	sem := make(chan struct{}, batchTaskCount)
 	dbLock := &sync.Mutex{}
+	left := len(download_queue)
+	downloaded := 0
 
 	for _, i := range download_queue {
 		sem <- struct{}{}
@@ -213,6 +232,11 @@ func DownloadItemHandler(asmrClient *spider.ASMRClient) {
 			dbLock.Unlock()
 			<-sem
 		}()
+		//每下载100个作品发送一次通知
+		downloaded++
+		if (left-downloaded)%100 == 0 {
+			log.DiscordWebhook.Send(fmt.Sprintf("已下载作品数量: %d, 还剩 %d 个作品未下载", downloaded, left-downloaded))
+		}
 	}
 	utils.FixBrokenDownloadFile(maxRetry)
 
@@ -283,7 +307,14 @@ func CheckIfNeedUpdateDownload() bool {
 	staticsInfo := metaDataStatics.GetStaticsInfo()
 	infoStr := staticsInfo.PrettyInfoStr()
 	log.AsmrLog.Info(infoStr)
-	if metaDataStatics.TotalCount > (metaDataStatics.SubTitleDownloaded + metaDataStatics.NoSubTitleDownloaded) {
+
+	diff := metaDataStatics.TotalCount - (metaDataStatics.SubTitleDownloaded + metaDataStatics.NoSubTitleDownloaded)
+
+	if err := log.DiscordWebhook.Send(fmt.Sprintf("未下载音声数量 %d", diff)); err != nil {
+		log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+	}
+
+	if diff > 0 {
 		return true
 	}
 	return false

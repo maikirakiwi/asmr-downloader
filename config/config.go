@@ -219,6 +219,8 @@ type Config struct {
 	MaxFailedRetry int `json:"max_failed_retry"`
 	// 下载类型: "prioritizemp3" - 优先下载MP3文件(如果存在同名的WAV/FLAC则跳过)，"all" - 下载所有文件
 	DownloadType string `json:"download_type"`
+	// Discord Webhook URL for notifications
+	DiscordWebhook string `json:"discord_webhook"`
 }
 
 // SafePrintInfoStr
@@ -261,6 +263,7 @@ func generateDefaultConfig() {
 		MetaDataDb:       "asmr.db",
 		MaxFailedRetry:   3,
 		DownloadType:     "all",
+		DiscordWebhook:   "",
 	}
 
 	//提示用户输入用户名

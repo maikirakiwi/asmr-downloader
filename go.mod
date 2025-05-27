@@ -3,6 +3,7 @@ module asmr-downloader
 go 1.24.3
 
 require (
+	github.com/gtuk/discordwebhook v1.2.0
 	github.com/melbahja/got v0.7.0
 	github.com/xxjwxc/gowp v0.0.0-20220528192505-f87b7668d4ff
 	go.uber.org/zap v1.10.0
