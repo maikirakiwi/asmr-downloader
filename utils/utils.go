@@ -239,6 +239,13 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 		logStr := GetCurrentDateTime() + "|" + storePath + "|" + url
 		resultLines = append(resultLines, logStr)
 	} else {
+		content, err := os.ReadFile(storePath)
+		if err == nil && string(content) == "error code: 1015" {
+			log.AsmrLog.Error(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath))
+			time.Sleep(time.Second * 3)
+			resultLines = append(resultLines, GetCurrentDateTime()+"|"+storePath+"|"+url)
+			return resultLines, nil
+		}
 		log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
 	}
 	return resultLines, nil
