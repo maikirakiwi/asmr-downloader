@@ -131,7 +131,16 @@ func CalculateMaxPage(totalCount int, pageSize int) int {
 }
 
 func DownloadFile(storePath string, fileUrl string) error {
-	resp, err := http.Get(fileUrl)
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -239,6 +248,7 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 		logStr := GetCurrentDateTime() + "|" + storePath + "|" + url
 		resultLines = append(resultLines, logStr)
 	} else {
+		// Handle cloudflare 1015 error
 		content, err := os.ReadFile(storePath)
 		if err == nil && string(content) == "error code: 1015" {
 			log.AsmrLog.Error(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath))
@@ -246,6 +256,7 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 			resultLines = append(resultLines, GetCurrentDateTime()+"|"+storePath+"|"+url)
 			return resultLines, nil
 		}
+
 		log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
 	}
 	return resultLines, nil
