@@ -227,36 +227,21 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 			return nil, nil
 		}
 	}
-	var fileUrl = url
-	fileClient := got.New()
-	err := fileClient.Download(fileUrl, storePath)
-	//err := errors.New("")
+	// Remove the file if it exists
+	_ = os.Remove(storePath)
 
-	// Handle both normal errors and cloudflare rate limiting errors
-	content, err := os.ReadFile(storePath)
-	if err != nil || strings.Contains(string(content), "1015") {
-		// Remove the file if it exists
-		_ = os.Remove(storePath)
-
-		err = DownloadFile(storePath, fileUrl)
-		if err == nil {
-			log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
-			return resultLines, nil
-		} else {
-			log.AsmrLog.Error(err.Error())
-			//fmt.Printf("文件: %s下载失败: %s\n", fileName, fileUrl)
-			log.AsmrLog.Error(fmt.Sprintf("文件: %s下载失败: %s", storePath, err.Error()))
-			//记录失败文件  时间, 文件路径，文件url
-			logStr := GetCurrentDateTime() + "|" + storePath + "|" + fileUrl
-			resultLines = append(resultLines, logStr)
-		}
-
+	err := DownloadFile(storePath, url)
+	if err != nil {
+		log.AsmrLog.Error(err.Error())
+		//fmt.Printf("文件: %s下载失败: %s\n", fileName, url)
+		log.AsmrLog.Error(fmt.Sprintf("文件: %s下载失败: %s", storePath, err.Error()))
+		//记录失败文件  时间, 文件路径，文件url
+		logStr := GetCurrentDateTime() + "|" + storePath + "|" + url
+		resultLines = append(resultLines, logStr)
 	} else {
 		log.AsmrLog.Info("文件下载成功: ", zap.String("info", storePath))
-		//fmt.Println("文件下载成功: ", filePathToStore)
 	}
 	return resultLines, nil
-
 }
 
 // FixBrokenDownloadFile
