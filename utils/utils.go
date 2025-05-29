@@ -236,10 +236,17 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 			return nil, nil
 		}
 	}
-	// Remove the file if it exists
-	_ = os.Remove(storePath)
+	// Remove the file if there exists 1015 error
+	content, err := os.ReadFile(storePath)
+	if err == nil && string(content) == "error code: 1015" {
+		_ = os.Remove(storePath)
 
-	err := DownloadFile(storePath, url)
+		// Don't download again if file exists
+	} else if err == nil {
+		return resultLines, nil
+	}
+
+	err = DownloadFile(storePath, url)
 	if err != nil {
 		log.AsmrLog.Error(err.Error())
 		//fmt.Printf("文件: %s下载失败: %s\n", fileName, url)
