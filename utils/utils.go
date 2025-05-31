@@ -185,6 +185,11 @@ func NewFileDownloader(url string, path string, filename string) func() error {
 			log.AsmrLog.Error(err.Error())
 			//fmt.Printf("文件: %s下载失败: %s\n", fileName, fileUrl)
 			log.AsmrLog.Error(fmt.Sprintf("文件: %s下载失败: %s", fileName, err.Error()))
+
+			if err := log.DiscordWebhook.Send(fmt.Sprintf("文件: %s下载失败: %s", storePath, err.Error())); err != nil {
+				log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+			}
+
 			//记录失败文件  时间, 文件路径，文件url
 			logStr := GetCurrentDateTime() + "|" + storePath + "|" + fileUrl + "\n"
 			write := bufio.NewWriter(FailedDownloadFile)
@@ -251,6 +256,10 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 		log.AsmrLog.Error(err.Error())
 		//fmt.Printf("文件: %s下载失败: %s\n", fileName, url)
 		log.AsmrLog.Error(fmt.Sprintf("文件: %s下载失败: %s", storePath, err.Error()))
+
+		if err := log.DiscordWebhook.Send(fmt.Sprintf("文件: %s下载失败: %s", storePath, err.Error())); err != nil {
+			log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+		}
 		//记录失败文件  时间, 文件路径，文件url
 		logStr := GetCurrentDateTime() + "|" + storePath + "|" + url
 		resultLines = append(resultLines, logStr)
@@ -259,6 +268,9 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 		content, err := os.ReadFile(storePath)
 		if err == nil && string(content) == "error code: 1015" {
 			log.AsmrLog.Error(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath))
+			if err := log.DiscordWebhook.Send(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath)); err != nil {
+				log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
+			}
 			time.Sleep(time.Second * 3)
 			resultLines = append(resultLines, GetCurrentDateTime()+"|"+storePath+"|"+url)
 			return resultLines, nil
@@ -314,6 +326,9 @@ func FixBrokenDownloadFile(maxRetry int) {
 			if len(resultContainer) <= 0 {
 				lastSuccessIndex = index
 				break
+			}
+			if err := log.DiscordWebhook.Send(fmt.Sprintf("重试下载文件再次出错,重试中(剩余重试次数: %d)...", maxRetry-i-1)); err != nil {
+				log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
 			}
 			log.AsmrLog.Info(fmt.Sprintf("重试下载文件再次出错,重试中(剩余重试次数: %d)...", maxRetry-i-1))
 		}
