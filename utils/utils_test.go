@@ -45,7 +45,7 @@ func TestGetRapidRespSiteUrl(t *testing.T) {
 	var latestPublishSite = ""
 	client := Client.Get().(*http.Client)
 	req, _ := http.NewRequest("GET", "https://as.mr", nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode != 200 {
 		println("尝试访问asmr.one最新站点发布页as.mr失败: ", err.Error())
@@ -60,7 +60,7 @@ func TestGetRapidRespSiteUrl(t *testing.T) {
 
 	client = Client.Get().(*http.Client)
 	req, _ = http.NewRequest("GET", latestPublishSite, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
 	resp, err = client.Do(req)
 	if err != nil || resp.StatusCode != 200 {
 		println("访问asmr.one最新域名发布页出现错误: ", err.Error())
@@ -93,7 +93,7 @@ func TestGetRapidRespSiteUrl(t *testing.T) {
 	jsContentUrl := latestPublishSite + jsFilePath
 	client = Client.Get().(*http.Client)
 	req, _ = http.NewRequest("GET", jsContentUrl, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
 	resp, err = client.Do(req)
 	if err != nil || resp.StatusCode != 200 {
 		println("访问asmr.one最新域名发布页js resource出现错误: ", err.Error())

@@ -57,7 +57,7 @@ func HeadersInit(r *http.Request) *http.Request {
 	r.Header.Set("Sec-Fetch-Mode", "cors")
 	r.Header.Set("Sec-Fetch-Site", "cross-site")
 	r.Header.Set("Sec-Fetch-Dest", "empty")
-	r.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36")
+	r.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
 	return r
 }
 
