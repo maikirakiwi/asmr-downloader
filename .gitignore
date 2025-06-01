@@ -31,3 +31,6 @@ logs/
 failed-download.txt
 config.json
 data/
+.DS_Store
+asmr.db
+failed-download.txt.tmp

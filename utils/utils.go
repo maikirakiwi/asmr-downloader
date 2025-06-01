@@ -267,11 +267,11 @@ func NewFixFileDownloader(url string, storePath string, resultLines []string) ([
 		// Handle cloudflare 1015 error
 		content, err := os.ReadFile(storePath)
 		if err == nil && string(content) == "error code: 1015" {
-			log.AsmrLog.Error(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath))
-			if err := log.DiscordWebhook.Send(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠3秒后重试。", storePath)); err != nil {
+			log.AsmrLog.Error(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠10秒后重试。", storePath))
+			if err := log.DiscordWebhook.Send(fmt.Sprintf("文件: %s 下载遇到了 1015 错误，休眠10秒后重试。", storePath)); err != nil {
 				log.AsmrLog.Error("发送Discord Webhook失败: ", zap.String("error", err.Error()))
 			}
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 10)
 			resultLines = append(resultLines, GetCurrentDateTime()+"|"+storePath+"|"+url)
 			return resultLines, nil
 		}
